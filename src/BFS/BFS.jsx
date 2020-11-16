@@ -34,6 +34,7 @@ class BFS extends Component {
       const { canvasWidth, canvasHeight } = this.state.canvasSize;
       const ctx = this.canvasCoordinates.getContext("2d");
       ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+      //   this.drawNeighbors(this.Hex(q, r, s));
       this.drawHex(this.canvasCoordinates, this.Point(x, y), "lime", 2);
       return true;
     }
@@ -104,11 +105,11 @@ class BFS extends Component {
           y > hexHeight / 2 &&
           y < canvasHeight - hexHeight / 2
         ) {
-          this.drawHex(this.canvasHex, this.Point(x, y));
+          this.drawHex(this.canvasHex, this.Point(x, y), "grey");
           this.drawHexCoordinates(
             this.canvasHex,
             this.Point(x, y),
-            this.Hex(q - p, r, -q - r)
+            this.Hex(q - p, r, -(q - p) - r)
           );
         }
       }
@@ -127,11 +128,11 @@ class BFS extends Component {
           y > hexHeight / 2 &&
           y < canvasHeight - hexHeight / 2
         ) {
-          this.drawHex(this.canvasHex, this.Point(x, y));
+          this.drawHex(this.canvasHex, this.Point(x, y), "grey");
           this.drawHexCoordinates(
             this.canvasHex,
             this.Point(x, y),
-            this.Hex(q - p, r, -q - r)
+            this.Hex(q - p, r, -(q + n) - r)
           );
         }
       }
@@ -166,13 +167,14 @@ class BFS extends Component {
 
   handleMouseMove(e) {
     const { left, right, top, bottom } = this.state.canvasPosition;
-    console.log(e.pageX, e.pageY);
     let offsetX = e.pageX - left;
     let offsetY = e.pageY - top;
     const { q, r, s } = this.cubeRound(
       this.pixelToHex(this.Point(offsetX, offsetY))
     );
     const { x, y } = this.hexToPixel(this.Hex(q, r, s));
+    this.getDistanceLine(this.Hex(0, 0, 0), this.Hex(q, r, s));
+    console.log(this.state.currentDistanceLine);
     this.drawHex(this.canvasCoordinates, this.Point(x, y), "green", 2);
     this.setState({
       currentHex: { q, r, s, x, y },
@@ -218,6 +220,70 @@ class BFS extends Component {
     }
 
     return this.Hex(rx, ry, rz);
+  }
+
+  cubeDirections(direction) {
+    const cubeDirections = [
+      this.Hex(1, 0, -1),
+      this.Hex(1, -1, 0),
+      this.Hex(0, -1, 1),
+      this.Hex(-1, 0, 1),
+      this.Hex(-1, 1, 0),
+      this.Hex(0, 1, -1),
+    ];
+
+    return cubeDirections[direction];
+  }
+
+  cubeAdd(a, b) {
+    return this.Hex(a.q + b.q, a.r + b.r, a.s + b.s);
+  }
+
+  cubeSubtract(hexA, hexB) {
+    return this.Hex(hexA.q - hexB.q, hexA.r - hexB.r, hexA.s - hexB.s);
+  }
+
+  getCubeNeighbor(h, direction) {
+    return this.cubeAdd(h, this.cubeDirections(direction));
+  }
+
+  drawNeighbors(h) {
+    for (let i = 0; i <= 5; i++) {
+      const { q, r, s } = this.getCubeNeighbor(this.Hex(h.q, h.r, h.s), i);
+      const { x, y } = this.hexToPixel(this.Hex(q, r, s));
+      this.drawHex(this.canvasCoordinates, this.Point(x, y), "red", 2);
+    }
+  }
+
+  cubeDistance(hexA, hexB) {
+    const { q, r, s } = this.cubeSubtract(hexA, hexB);
+    return (Math.abs(q) + Math.abs(r) + Math.abs(s)) / 2;
+  }
+
+  linearInt(a, b, t) {
+    return a + (b - a) * t;
+  }
+
+  cubeLinearInt(hexA, hexB, t) {
+    return this.Hex(
+      this.linearInt(hexA.q, hexB.q, t),
+      this.linearInt(hexA.r, hexB.r, t),
+      this.linearInt(hexA.s, hexB.s, t)
+    );
+  }
+
+  getDistanceLine(hexA, hexB) {
+    let dist = this.cubeDistance(hexA, hexB);
+    let arr = [];
+    for (let i = 0; i <= dist; i++) {
+      let center = this.hexToPixel(
+        this.cubeRound(this.cubeLinearInt(hexA, hexB, (1.0 / dist) * i))
+      );
+      arr = [].concat(arr, center);
+    }
+    this.setState({
+      currentDistanceLine: arr,
+    });
   }
 
   render() {
