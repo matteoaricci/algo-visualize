@@ -4,13 +4,14 @@ import "./BFS.css";
 class BFS extends Component {
   constructor(props) {
     super(props);
+    this.handleMouseMove = this.handleMouseMove.bind(this);
     this.state = {
       canvasSize: {
         canvasWidth: 800,
         canvasHeight: 600,
       },
       hexSize: 20,
-      hexOrigin: { x: 350, y: 300 },
+      hexOrigin: { x: 400, y: 300 },
     };
   }
 
@@ -21,6 +22,9 @@ class BFS extends Component {
     const { canvasWidth, canvasHeight } = this.state.canvasSize;
     this.canvasHex.width = canvasWidth;
     this.canvasHex.height = canvasHeight;
+    this.canvasCoordinates.width = canvasWidth;
+    this.canvasCoordinates.height = canvasHeight;
+    this.getCanvasPosition(this.canvasCoordinates);
     this.drawHexes();
   }
 
@@ -69,6 +73,8 @@ class BFS extends Component {
       (canvasHeight - hexOrigin.y) / (hexHeight / 2)
     );
 
+    //      Adjusts each row of hexes to the left and keeps the shift alignment for every other row
+    //      This is for top half of the screen, bottom half is later
     let p = 0;
     for (let r = 0; r <= rBottomSide; r++) {
       if (r % 2 === 0 && r !== 0) {
@@ -116,8 +122,8 @@ class BFS extends Component {
     }
   }
 
-  Hex(q, r) {
-    return { q: q, r: r };
+  Hex(q, r, s) {
+    return { q: q, r: r, s: s };
   }
 
   hexToPixel(h) {
@@ -141,10 +147,72 @@ class BFS extends Component {
     return { hexWidth, hexHeight, vertDist, horizDist };
   }
 
+  handleMouseMove(e) {
+    const { left, right, top, bottom } = this.state.canvasPosition;
+    console.log(e.pageX, e.pageY);
+    let offsetX = e.pageX - left;
+    let offsetY = e.pageY - top;
+    const { q, r, s } = this.cubeRound(
+      this.pixelToHex(this.Point(offsetX, offsetY))
+    );
+    const { x, y } = this.hexToPixel(this.Hex(q, r, s));
+    this.drawHHex(this.canvasCoordinates, this.Point(x, y), "green", 2);
+    this.setState({
+      currentHHex: { q, r, s, x, y },
+    });
+  }
+
+  getCanvasPosition(canvasID) {
+    let rect = canvasID.getBoundingClientRect();
+    this.setState({
+      canvasPosition: {
+        left: rect.left,
+        right: rect.right,
+        top: rect.top,
+        bottom: rect.bottom,
+      },
+    });
+  }
+
+  pixelToHex(p) {
+    let size = this.state.hexSize;
+    let origin = this.state.hexOrigin;
+    let q =
+      (((p.x - origin.x) * Math.sqrt(3)) / 3 - (p.y - origin.y) / 3) / size;
+    let r = ((p.y - origin.y) * 2) / 3 / size;
+    return this.Hex(q, r, -q, -r);
+  }
+
+  cubeRound(cube) {
+    let rx = Math.round(cube.q);
+    let ry = Math.round(cube.r);
+    let rz = Math.round(cube.s);
+
+    let xDiff = Math.abs(rx - cube.q);
+    let yDiff = Math.abs(ry - cube.r);
+    let zDiff = Math.abs(rz - cube.z);
+
+    if (xDiff > yDiff && xDiff > zDiff) {
+      rx = -ry - rz;
+    } else if (yDiff > zDiff) {
+      ry = -rx - rz;
+    } else {
+      rz = -rx - ry;
+    }
+
+    return this.Hex(rx, ry, rz);
+  }
+
   render() {
     return (
       <div className="BFS">
         <canvas ref={(canvasHex) => (this.canvasHex = canvasHex)}></canvas>
+        <canvas
+          ref={(canvasCoordinates) =>
+            (this.canvasCoordinates = canvasCoordinates)
+          }
+          onMouseMove={this.handleMouseMove}
+        ></canvas>
       </div>
     );
   }
