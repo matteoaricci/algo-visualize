@@ -28,6 +28,18 @@ class BFS extends Component {
     this.drawHexes();
   }
 
+  shouldComponentUpdate(nextProps, nextState) {
+    if (nextState.currentHex !== this.state.currentHex) {
+      const { q, r, s, x, y } = nextState.currentHex;
+      const { canvasWidth, canvasHeight } = this.state.canvasSize;
+      const ctx = this.canvasCoordinates.getContext("2d");
+      ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+      this.drawHex(this.canvasCoordinates, this.Point(x, y), "lime", 2);
+      return true;
+    }
+    return false;
+  }
+
   getHexCornerCoord(center, i) {
     const angleDeg = 60 * i - 30;
     const angleRad = (Math.PI / 180) * angleDeg;
@@ -40,7 +52,7 @@ class BFS extends Component {
     return { x: x, y: y };
   }
 
-  drawHex(canvasID, center) {
+  drawHex(canvasID, center, color, width) {
     for (let i = 0; i <= 5; i++) {
       let start = this.getHexCornerCoord(center, i);
       let end = this.getHexCornerCoord(center, i + 1);
@@ -48,15 +60,19 @@ class BFS extends Component {
       this.drawLine(
         canvasID,
         { x: start.x, y: start.y },
-        { x: end.x, y: end.y }
+        { x: end.x, y: end.y },
+        color,
+        width
       );
     }
   }
 
-  drawLine(canvasID, start, end) {
+  drawLine(canvasID, start, end, color, width) {
     const ctx = canvasID.getContext("2d");
     ctx.beginPath();
     ctx.moveTo(start.x, start.y);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
     ctx.lineTo(end.x, end.y);
     ctx.stroke();
     ctx.closePath();
@@ -92,7 +108,7 @@ class BFS extends Component {
           this.drawHexCoordinates(
             this.canvasHex,
             this.Point(x, y),
-            this.Hex(q - p, r)
+            this.Hex(q - p, r, -q - r)
           );
         }
       }
@@ -115,7 +131,7 @@ class BFS extends Component {
           this.drawHexCoordinates(
             this.canvasHex,
             this.Point(x, y),
-            this.Hex(q - p, r)
+            this.Hex(q - p, r, -q - r)
           );
         }
       }
@@ -135,8 +151,9 @@ class BFS extends Component {
 
   drawHexCoordinates(canvasID, center, h) {
     const ctx = canvasID.getContext("2d");
-    ctx.fillText(h.q, center.x - 10, center.y);
-    ctx.fillText(h.r, center.x + 7, center.y);
+    ctx.fillText(h.q, center.x + 6, center.y);
+    ctx.fillText(h.r, center.x - 3, center.y + 15);
+    ctx.fillText(h.s, center.x - 12, center.y);
   }
 
   getHexParameters() {
@@ -156,9 +173,9 @@ class BFS extends Component {
       this.pixelToHex(this.Point(offsetX, offsetY))
     );
     const { x, y } = this.hexToPixel(this.Hex(q, r, s));
-    this.drawHHex(this.canvasCoordinates, this.Point(x, y), "green", 2);
+    this.drawHex(this.canvasCoordinates, this.Point(x, y), "green", 2);
     this.setState({
-      currentHHex: { q, r, s, x, y },
+      currentHex: { q, r, s, x, y },
     });
   }
 
