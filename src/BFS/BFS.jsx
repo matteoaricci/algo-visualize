@@ -14,7 +14,7 @@ class BFS extends Component {
       hexSize: 20,
       hexOrigin: { x: 400, y: 300 },
       currentHex: { q: 0, r: 0, s: 0, x: 0, y: 0 },
-      playerPosition: { q: 0, r: 0, s: 0, x: 0, y: 0 },
+      obstacles: [],
     };
   }
 
@@ -25,9 +25,9 @@ class BFS extends Component {
     const { canvasWidth, canvasHeight } = this.state.canvasSize;
     this.canvasHex.width = canvasWidth;
     this.canvasHex.height = canvasHeight;
-    this.canvasCoordinates.width = canvasWidth;
-    this.canvasCoordinates.height = canvasHeight;
-    this.getCanvasPosition(this.canvasCoordinates);
+    this.canvasInteraction.width = canvasWidth;
+    this.canvasInteraction.height = canvasHeight;
+    this.getCanvasPosition(this.canvasInteraction);
     this.drawHexes();
   }
 
@@ -35,33 +35,43 @@ class BFS extends Component {
     if (nextState.currentHex !== this.state.currentHex) {
       const { q, r, s, x, y } = nextState.currentHex;
       const { canvasWidth, canvasHeight } = this.state.canvasSize;
-      const ctx = this.canvasCoordinates.getContext("2d");
+      const ctx = this.canvasInteraction.getContext("2d");
       ctx.clearRect(0, 0, canvasWidth, canvasHeight);
       let currentDistanceLine = nextState.currentDistanceLine;
-      for (let i = 0; i <= currentDistanceLine.length - 1; i++) {
+      for (let i = 0; i <= currentDistanceLine.length - 2; i++) {
         if (i === 0) {
           this.drawHex(
-            this.canvasCoordinates,
+            this.canvasInteraction,
             this.Point(currentDistanceLine[i].x, currentDistanceLine[i].y),
-            "black",
             1,
+            "black",
             "red"
           );
         } else {
           this.drawHex(
-            this.canvasCoordinates,
+            this.canvasInteraction,
             this.Point(currentDistanceLine[i].x, currentDistanceLine[i].y),
-            "black",
             1,
+            "black",
             "grey"
           );
         }
       }
+      nextState.obstacles.map((l) => {
+        const { q, r, s, x, y } = JSON.parse(l);
+        this.drawHex(
+          this.canvasInteraction,
+          this.Point(x, y),
+          1,
+          "black",
+          "black"
+        );
+      });
       this.drawHex(
-        this.canvasCoordinates,
+        this.canvasInteraction,
         this.Point(x, y),
-        "black",
         1,
+        "black",
         "grey"
       );
       return true;
@@ -81,21 +91,21 @@ class BFS extends Component {
     return { x: x, y: y };
   }
 
-  drawHex(canvasID, center, lineColor, width, fillColor) {
+  drawHex(canvasID, center, lineWidth, lineColor, fillColor) {
     for (let i = 0; i <= 5; i++) {
       let start = this.getHexCornerCoord(center, i);
       let end = this.getHexCornerCoord(center, i + 1);
       this.fillHex(canvasID, center, fillColor);
-      this.drawLine(canvasID, start, end, lineColor, width);
+      this.drawLine(canvasID, start, end, lineWidth, lineColor);
     }
   }
 
-  drawLine(canvasID, start, end, color, width) {
+  drawLine(canvasID, start, end, lineWidth, lineColor) {
     const ctx = canvasID.getContext("2d");
     ctx.beginPath();
     ctx.moveTo(start.x, start.y);
-    ctx.strokeStyle = color;
-    ctx.lineWidth = width;
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = lineWidth;
     ctx.lineTo(end.x, end.y);
     ctx.stroke();
     ctx.closePath();
@@ -192,14 +202,7 @@ class BFS extends Component {
       this.pixelToHex(this.Point(offsetX, offsetY))
     );
     const { x, y } = this.hexToPixel(this.Hex(q, r, s));
-    this.getDistanceLine(
-      this.Hex(
-        this.state.playerPosition.q,
-        this.state.playerPosition.r,
-        this.state.playerPosition.s
-      ),
-      this.Hex(q, r, s)
-    );
+    this.getDistanceLine(this.Hex(0, 0, 0), this.Hex(q, r, s));
     console.log(this.state.currentDistanceLine);
     if (
       x > hexWidth / 2 &&
@@ -283,7 +286,7 @@ class BFS extends Component {
     for (let i = 0; i <= 5; i++) {
       const { q, r, s } = this.getCubeNeighbor(this.Hex(h.q, h.r, h.s), i);
       const { x, y } = this.hexToPixel(this.Hex(q, r, s));
-      this.drawHex(this.canvasCoordinates, this.Point(x, y), "red", 2);
+      this.drawHex(this.canvasInteraction, this.Point(x, y), "red", 2);
     }
   }
 
@@ -340,8 +343,22 @@ class BFS extends Component {
   }
 
   handleClick() {
+    this.addObstacles();
+  }
+
+  addObstacles() {
+    let obstacles = this.state.obstacles;
+    if (!obstacles.includes(JSON.stringify(this.state.currentHex))) {
+      obstacles = [].concat(obstacles, JSON.stringify(this.state.currentHex));
+    } else {
+      obstacles.map((l, i) => {
+        if (l == JSON.stringify(this.state.currentHex)) {
+          obstacles = obstacles.slice(0, i).concat(obstacles.slice(i + 1));
+        }
+      });
+    }
     this.setState({
-      playerPosition: this.state.currentHex,
+      obstacles: obstacles,
     });
   }
 
@@ -352,6 +369,11 @@ class BFS extends Component {
         <canvas
           ref={(canvasCoordinates) =>
             (this.canvasCoordinates = canvasCoordinates)
+          }
+        ></canvas>
+        <canvas
+          ref={(canvasInteraction) =>
+            (this.canvasInteraction = canvasInteraction)
           }
           onMouseMove={this.handleMouseMove}
           onClick={this.handleClick}
