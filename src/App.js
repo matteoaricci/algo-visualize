@@ -1,4 +1,4 @@
-import BFS from './BFS/BFS';
+import BFS from "./BFS/BFS";
 
 function App() {
   return (
