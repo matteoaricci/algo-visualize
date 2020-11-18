@@ -587,7 +587,7 @@ class BFS extends Component {
     ctx.beginPath();
     ctx.moveTo(fromx, fromy);
     ctx.lineTo(tox, toy);
-    ctx.strokeStyle = "#05b9f5";
+    ctx.strokeStyle = "blue";
     ctx.lineWidth = 3;
     ctx.stroke();
     ctx.beginPath();
@@ -606,24 +606,32 @@ class BFS extends Component {
       tox - headlen * Math.cos(angle - Math.PI / 7),
       toy - headlen * Math.sin(angle - Math.PI / 7)
     );
-    ctx.strokeStyle = "#05b9f5";
+    ctx.strokeStyle = "black";
     ctx.lineWidth = 5;
     ctx.stroke();
-    ctx.fillStyle = "#05b9f5";
+    ctx.fillStyle = "black";
     ctx.fill();
   }
 
   render() {
     return (
       <div className="BFS">
-        <canvas ref={(canvasHex) => (this.canvasHex = canvasHex)}></canvas>
         <canvas
+          id="canvas-hex"
+          ref={(canvasHex) => (this.canvasHex = canvasHex)}
+        ></canvas>
+        <canvas
+          id="canvas-coord"
           ref={(canvasCoordinates) =>
             (this.canvasCoordinates = canvasCoordinates)
           }
         ></canvas>
-        <canvas ref={(canvasView) => (this.canvasView = canvasView)}></canvas>
         <canvas
+          id="canvas-view"
+          ref={(canvasView) => (this.canvasView = canvasView)}
+        ></canvas>
+        <canvas
+          id="canvas-inter"
           ref={(canvasInteraction) =>
             (this.canvasInteraction = canvasInteraction)
           }

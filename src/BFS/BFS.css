@@ -4,5 +4,18 @@ body {
 
 canvas {
   position: absolute;
-  left: 0;
+}
+
+#canvas-inter,
+#canvas-view,
+#canvas-hex {
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -30%);
+}
+
+.BFS {
+  margin: 0 auto;
+  height: 100vh;
+  position: relative;
 }
