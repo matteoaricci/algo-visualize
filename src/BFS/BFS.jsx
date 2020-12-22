@@ -184,7 +184,7 @@ class BFS extends Component {
 
   shouldComponentUpdate(nextProps, nextState) {
     if (nextState.currentHex !== this.state.currentHex) {
-      const { q, r, s, x, y } = nextState.currentHex;
+      // const { q, r, s, x, y } = nextState.currentHex;
       const { canvasWidth, canvasHeight } = this.state.canvasSize;
       const ctx = this.canvasInteraction.getContext("2d");
       ctx.clearRect(0, 0, canvasWidth, canvasHeight);
@@ -192,12 +192,12 @@ class BFS extends Component {
       this.drawPath();
       return true;
     }
-    if (nextState.cameFrom != this.state.cameFrom) {
+    if (nextState.cameFrom !== this.state.cameFrom) {
       const { canvasWidth, canvasHeight } = this.state.canvasSize;
       const ctx = this.canvasView.getContext("2d");
       ctx.clearRect(0, 0, canvasWidth, canvasHeight);
       for (let l in nextState.cameFrom) {
-        const { q, r, s } = JSON.parse(l);
+        const { q, r } = JSON.parse(l);
         const { x, y } = this.hexToPixel(this.Hex(q, r));
         this.drawHex(
           this.canvasView,
@@ -265,7 +265,7 @@ class BFS extends Component {
     var hexPathMap = [];
     var p = 0;
     for (let r = 0; r <= rBottomSide; r++) {
-      if (r % 2 == 0 && r !== 0) {
+      if (r % 2 === 0 && r !== 0) {
         p++;
       }
       for (let q = -qLeftSide; q <= qRightSide; q++) {
@@ -342,14 +342,9 @@ class BFS extends Component {
   }
 
   handleMouseMove(e) {
-    const { left, right, top, bottom } = this.state.canvasPosition;
+    const { left, top } = this.state.canvasPosition;
     const { canvasWidth, canvasHeight } = this.state.canvasSize;
-    const {
-      hexWidth,
-      hexHeight,
-      vertDist,
-      horizDist,
-    } = this.state.hexParameters;
+    const { hexWidth, hexHeight } = this.state.hexParameters;
     let offsetX = e.pageX - left;
     let offsetY = e.pageY - top;
     const { q, r, s } = this.cubeRound(
@@ -511,7 +506,13 @@ class BFS extends Component {
     this.state.obstacles.map((l) => {
       const { q, r, s } = JSON.parse(l);
       const { x, y } = this.hexToPixel(this.Hex(q, r, s));
-      this.drawHex(this.canvasHex, this.Point(x, y), 1, "black", "black");
+      return this.drawHex(
+        this.canvasHex,
+        this.Point(x, y),
+        1,
+        "black",
+        "black"
+      );
     });
   }
 
@@ -538,7 +539,9 @@ class BFS extends Component {
           this.state.hexPathMap.includes(JSON.stringify(l))
         ) {
           frontier.push(l);
-          cameFrom[JSON.stringify(l)] = JSON.stringify(current);
+          return (cameFrom[JSON.stringify(l)] = JSON.stringify(current));
+        } else {
+          return null
         }
       });
     }
@@ -552,9 +555,9 @@ class BFS extends Component {
     const { cameFrom } = this.state;
     start = JSON.stringify(start);
     current = JSON.stringify(current);
-    if (cameFrom[current] != undefined) {
+    if (cameFrom[current] !== undefined) {
       var path = [current];
-      while (current != start) {
+      while (current !== start) {
         current = cameFrom[current];
         path.push(current);
       }
